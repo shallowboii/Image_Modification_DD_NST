@@ -9,8 +9,3 @@ numpy
 opencv-python
 matplotlib
 scipy
-
-# PyTorch + CUDA 12.6 (for a version that has a cu126 wheel)
-torch==2.7.1+cu126 --index-url https://download.pytorch.org/whl/cu126
-torchvision==0.22.1+cu126 --index-url https://download.pytorch.org/whl/cu126
-torchaudio==2.7.1+cu126 --index-url https://download.pytorch.org/whl/cu126

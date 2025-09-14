@@ -9,14 +9,14 @@ import traceback
 
 app = FastAPI()
 init_db()
-os.makedirs("uploads", exist_ok=True)
+os.makedirs("uploads", exist_ok=True)   
 os.makedirs("results", exist_ok=True)
 
 @app.post("/generate")
 async def generate(file: UploadFile = File(...),
-                   file: UploadFile = File(...),
-                   preset: str = Form(None),
-                   cycles: int = Form(None),
+                   style: UploadFile = File(None),
+                   preset: str = Form(...),
+                   cycles: int = Form(...),
                    pyramid_size: int = Form(None),
                    pyramid_ratio: float = Form(None),
                    num_gradient_ascent_iterations: int = Form(None),

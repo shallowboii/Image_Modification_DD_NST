@@ -22,3 +22,10 @@ __pycache__/
 
 # .pth files
 *.pth
+
+#pictures
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp

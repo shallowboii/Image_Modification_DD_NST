@@ -5,7 +5,6 @@ PROJECT_ROOT = r"C:\Users\marci\Desktop\Image_Modification_DD_NST"
 # Put it at the front of sys.path so it has highest priority
 sys.path.insert(0, PROJECT_ROOT)
 from utils import main_deepdream as md
-from utils.utilities.constants import DEVICE
 
 def run_deepdream_once(np_img, config):
     """

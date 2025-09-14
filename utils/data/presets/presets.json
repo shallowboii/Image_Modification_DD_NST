@@ -1,0 +1,50 @@
+{
+  "LSD": {
+    "dd":{
+        "layer": ["layer3"],
+        "cycles": 3,
+        "pyramid_size": 5,
+        "pyramid_ratio": 2.0,
+        "num_gradient_ascent_iterations": 15,
+        "lr": 0.1
+    }
+    ,
+    "nst": {
+        "style_path": "kaleidoscope.jpg",
+        "num_steps": 200,
+        "style_weight": 1e6
+    }
+  },
+  "FAST": {
+    "dd":{
+        "layer": ["layer2"],
+        "cycles": 2,
+        "pyramid_size": 5,
+        "pyramid_ratio": 2.0,
+        "num_gradient_ascent_iterations": 15,
+        "lr": 0.1
+    }
+    ,
+    "nst": {
+        "style_path": "kaleidoscope.jpg",
+        "num_steps": 100,
+        "style_weight": 1e6
+    }
+  },
+  "Default": {
+    "dd":{
+        "layer": ["layer2"],
+        "cycles": 2,
+        "pyramid_size": 5,
+        "pyramid_ratio": 2.0,
+        "num_gradient_ascent_iterations": 15,
+        "lr": 0.1
+    }
+    ,
+    "nst": {
+        "style_path": "Abstract_Fractals.jpg",
+        "num_steps": 100,
+        "style_weight": 1e6
+    }
+  }
+}

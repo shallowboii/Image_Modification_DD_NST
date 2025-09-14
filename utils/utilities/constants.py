@@ -4,11 +4,10 @@ import os
 
 import numpy as np
 import torch
-
+from pathlib import Path
 
 IMAGENET_MEAN_1 = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD_1 = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # checking whether you have a GPU
 
@@ -18,6 +17,7 @@ UPPER_IMAGE_BOUND = torch.tensor(((1 - IMAGENET_MEAN_1) / IMAGENET_STD_1).reshap
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  
 # BASE_DIR = .../utils
 
+PRESET_FILE = os.path.join(BASE_DIR, "data", "presets", "presets.json")
 STYLE_DIR = os.path.join(BASE_DIR, "data", "in-images", "styles")
 
 

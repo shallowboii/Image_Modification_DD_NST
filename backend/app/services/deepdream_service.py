@@ -1,6 +1,7 @@
 import numpy as np
 import sys
-PROJECT_ROOT = r"C:\Users\marci\Desktop\Image_Modification_DD_NST"
+PROJECT_ROOT = r"C:\Users\marci\Projects\Image_Modification_DD_NST"
+
 
 # Put it at the front of sys.path so it has highest priority
 sys.path.insert(0, PROJECT_ROOT)

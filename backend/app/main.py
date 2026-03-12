@@ -1,4 +1,5 @@
 # backend/app/main.py
+from fastapi.responses import FileResponse
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 import os, uuid, json
@@ -87,3 +88,12 @@ def get_job(job_id: int):
 
 # Serve results dir
 app.mount("/results", StaticFiles(directory="results"), name="results")
+
+# Serve the React app as static files
+frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "react-app" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+else:
+    @app.get("/")
+    def root():
+        return {"message": "Frontend not built. Run: cd frontend/react-app && npm run build"}

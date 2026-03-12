@@ -45,7 +45,7 @@ def run_cyclic_pipeline(input_path, parameters, dump_dir):
             }
             print(f"Cycle {c+1}/{parameters.get("cycles",3)}: Running DeepDream with config:", dd_conf)
             #current = run_deepdream_once(current, dd_conf)
-            #asd
+
             # run NST
             nst_conf = {
                 "style_path": parameters.get("style") or preset["nst"]["style_path"],

@@ -29,3 +29,6 @@ __pycache__/
 *.jpeg
 *.gif
 *.bmp
+
+#node modules
+frontend/node_modules

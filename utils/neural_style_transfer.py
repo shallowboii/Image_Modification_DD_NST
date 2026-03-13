@@ -178,6 +178,11 @@ def run_style_transfer_from_numpy(
 
     if not os.path.isabs(style_path):
         style_path = os.path.join(STYLE_DIR, style_path)
+    if not os.path.exists(style_path):
+        raise FileNotFoundError(
+            f"[NST] Style image not found: {style_path}\n"
+            f"      Pass an absolute path, or a filename relative to STYLE_DIR ({STYLE_DIR})"
+        )
     style_pil = Image.open(style_path).convert("RGB")
     style_img = loader(style_pil).unsqueeze(0).to(DEVICE)
 

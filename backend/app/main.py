@@ -4,14 +4,13 @@ from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 import os, uuid, json
 from app.db import init_db, SessionLocal, Job
-from app.services.orchestrator import run_cyclic_pipeline
+from app.services.orchestrator import run_cyclic_pipeline, run_adaptive_cyclic_pipeline
 from sqlalchemy.orm import Session
 import traceback
 from pathlib import Path
 
 app = FastAPI()
 init_db()
-os.makedirs("uploads", exist_ok=True)
 os.makedirs("results", exist_ok=True)
 
 
@@ -27,17 +26,21 @@ async def generate(file: UploadFile = File(...),
                    pyramid_size: int = Form(None, ge=1, le=5),
                    pyramid_ratio: float = Form(None),
                    lr: float = Form(None),
+                   mode: str = Form(None),
                    background_tasks: BackgroundTasks = None):
     # save content upload
     uid = str(uuid.uuid4())
-    input_path = f"uploads/{uid}_{file.filename}"
+    upload_dir = Path(__file__).parent.parent / "uploads"
+    upload_dir.mkdir(exist_ok=True)
+
+    input_path = str((upload_dir / f"{uid}_{file.filename}").resolve())
     with open(input_path, "wb") as f:
         f.write(await file.read())
 
     # save style upload if provided
     style_path = None
     if style:
-        style_path = f"uploads/{uid}_style_{style.filename}"
+        style_path = str((upload_dir / f"{uid}_style_{style.filename}").resolve())
         with open(style_path, "wb") as f:
             f.write(await style.read())
 
@@ -75,8 +78,12 @@ async def generate(file: UploadFile = File(...),
                 })
             print(layer)
             print(parameters.get("layer"))
+            parameters["mode"] = mode
             print("Parameters for job:", parameters)
-            out = run_cyclic_pipeline(input_path, parameters, dump_dir="results")
+            if mode == "adaptive":
+                out = run_adaptive_cyclic_pipeline(input_path, parameters, dump_dir="results")
+            else:
+                out = run_cyclic_pipeline(input_path, parameters, dump_dir="results")
             db.query(Job).filter(Job.id == job_id).update({"status": "done", "output_path": out})
             db.commit()
         except Exception as e:

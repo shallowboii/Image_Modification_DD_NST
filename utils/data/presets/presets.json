@@ -1,50 +1,50 @@
 {
   "LSD": {
-    "dd":{
-        "layer": ["layer3"],
-        "cycles": 3,
-        "pyramid_size": 5,
-        "pyramid_ratio": 2.0,
-        "num_gradient_ascent_iterations": 15,
-        "lr": 0.1
-    }
-    ,
+    "dd": {
+      "layer": ["layer3"],
+      "cycles": 3,
+      "pyramid_size": 4,
+      "pyramid_ratio": 1.8,
+      "num_gradient_ascent_iterations": 10,
+      "lr": 0.06,
+      "dream_blend": 0.8
+    },
     "nst": {
-        "style_path": "kaleidoscope.jpg",
-        "num_steps": 200,
-        "style_weight": 1e6
+      "style_path": "kaleidoscope.jpg",
+      "num_steps": 200,
+      "style_weight": 1e6
     }
   },
   "FAST": {
-    "dd":{
-        "layer": ["layer2"],
-        "cycles": 2,
-        "pyramid_size": 5,
-        "pyramid_ratio": 2.0,
-        "num_gradient_ascent_iterations": 15,
-        "lr": 0.1
-    }
-    ,
+    "dd": {
+      "layer": ["layer2"],
+      "cycles": 2,
+      "pyramid_size": 3,
+      "pyramid_ratio": 1.7,
+      "num_gradient_ascent_iterations": 8,
+      "lr": 0.05,
+      "dream_blend": 0.7
+    },
     "nst": {
-        "style_path": "kaleidoscope.jpg",
-        "num_steps": 100,
-        "style_weight": 1e6
+      "style_path": "kaleidoscope.jpg",
+      "num_steps": 100,
+      "style_weight": 1e6
     }
   },
   "Default": {
-    "dd":{
-        "layer": ["layer1"],
-        "cycles": 2,
-        "pyramid_size": 4,
-        "pyramid_ratio": 2.0,
-        "num_gradient_ascent_iterations": 1,
-        "lr": 0.01
-    }
-    ,
+    "dd": {
+      "layer": ["layer1"],
+      "cycles": 2,
+      "pyramid_size": 4,
+      "pyramid_ratio": 2.0,
+      "num_gradient_ascent_iterations": 1,
+      "lr": 0.01,
+      "dream_blend": 1.0
+    },
     "nst": {
-        "style_path": "kaleidoscope.jpg",
-        "num_steps": 100,
-        "style_weight": 1e6
+      "style_path": "kaleidoscope.jpg",
+      "num_steps": 100,
+      "style_weight": 1e6
     }
   }
 }

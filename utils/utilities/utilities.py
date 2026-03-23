@@ -105,7 +105,7 @@ def save_and_maybe_display_image(config, dump_img, name_modifier=None):
     # step3: write image to the file system
     # ::-1 because opencv expects BGR (and not RGB) format...
     dump_path = os.path.join(dump_dir, dump_img_name)
-    cv.imwrite(dump_path, dump_img[:, :, ::-1])
+    cv.imwrite(dump_path, dump_img[:, :, ::-1], [cv.IMWRITE_JPEG_QUALITY, 98])
 
     # step4: potentially display/plot the image
     if config['should_display']:

@@ -26,6 +26,7 @@ async def generate(file: UploadFile = File(...),
                    pyramid_size: int = Form(None, ge=1, le=5),
                    pyramid_ratio: float = Form(None),
                    lr: float = Form(None),
+                   style_weight: float = Form(None),
                    mode: str = Form(None),
                    background_tasks: BackgroundTasks = None):
     # save content upload
@@ -73,11 +74,13 @@ async def generate(file: UploadFile = File(...),
                     "lr": lr,
                     "cycles": cycles,
                     "layer": layer,
+                    "style_weight": style_weight,
                     "preset": "Default",
-                    "style": style_path,
                 })
-            print(layer)
-            print(parameters.get("layer"))
+            # Always forward the uploaded style image and pipeline mode,
+            # regardless of whether a preset or custom params were used.
+            if style_path:
+                parameters["style"] = style_path
             parameters["mode"] = mode
             print("Parameters for job:", parameters)
             if mode == "adaptive":

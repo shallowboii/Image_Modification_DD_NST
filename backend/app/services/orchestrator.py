@@ -21,6 +21,22 @@ def load_presets():
             return json.load(f)
     return {}
 
+
+def _upsample_to_original(current_np, orig_w, orig_h, process_w):
+    """
+    If the original image was larger than the processing width, upsample
+    the pipeline result back to original dimensions using Lanczos resampling.
+    This keeps processing fast (at ~1080px) while delivering a full-size output.
+    """
+    out_h, out_w = current_np.shape[:2]
+    if orig_w <= process_w:
+        # Original was not larger than what we processed at — nothing to upsample.
+        return current_np
+    pil_img = Image.fromarray((np.clip(current_np, 0, 1) * 255).astype(np.uint8))
+    pil_img = pil_img.resize((orig_w, orig_h), Image.LANCZOS)
+    print(f"[Resolution] Upsampled {out_w}x{out_h} → {orig_w}x{orig_h} (Lanczos)")
+    return np.array(pil_img).astype(np.float32) / 255.0
+
 def run_cyclic_pipeline(input_path, parameters, dump_dir):
     """
     input_path: path to input image
@@ -34,7 +50,12 @@ def run_cyclic_pipeline(input_path, parameters, dump_dir):
     dd_preset = preset.get("dd", {})
     nst_preset = preset.get("nst", {})
     print("Using preset:", parameters.get("preset", ""))
-    img = utilities.load_image(input_path, target_shape=parameters.get("img_width", 1080))
+    process_w = parameters.get("img_width") or 1080
+    with Image.open(input_path) as _im:
+        orig_w, orig_h = _im.size  # (width, height)
+    print(f"[Resolution] Original: {orig_w}x{orig_h}  Processing at width: {process_w}")
+
+    img = utilities.load_image(input_path, target_shape=process_w)
     current = img
 
     # BUG FIX: parameters.get("cycles") is only set when the user sends individual params.
@@ -72,6 +93,8 @@ def run_cyclic_pipeline(input_path, parameters, dump_dir):
               f"steps={nst_conf['num_steps']}  style_w={nst_conf['style_weight']:.0e}")
         current = run_nst(current, nst_conf["style_path"], num_steps=nst_conf["num_steps"],
                           style_weight=nst_conf["style_weight"])
+
+    current = _upsample_to_original(current, orig_w, orig_h, process_w)
 
     # save final
     out_path = utilities.save_and_maybe_display_image(
@@ -208,7 +231,12 @@ def run_adaptive_cyclic_pipeline(
     base_dd_conf, base_nst_conf = _build_base_configs(input_path, parameters, dump_dir)
     controller = AdaptiveController(base_dd_conf, base_nst_conf, config=adaptive_config)
 
-    img = utilities.load_image(input_path, target_shape=parameters.get("img_width", 1080))
+    process_w = parameters.get("img_width") or 1080
+    with Image.open(input_path) as _im:
+        orig_w, orig_h = _im.size
+    print(f"[Resolution] Original: {orig_w}x{orig_h}  Processing at width: {process_w}")
+
+    img = utilities.load_image(input_path, target_shape=process_w)
     current = img
 
     for c in range(1, num_cycles + 1):
@@ -253,6 +281,8 @@ def run_adaptive_cyclic_pipeline(
             path = os.path.join(dump_dir, f"cycle_{c:02d}_nst.jpg")
             _save_intermediate(current, path)
             print(f"  ↳ Intermediate saved: {path}")
+
+    current = _upsample_to_original(current, orig_w, orig_h, process_w)
 
     # ── Save final result ─────────────────────────────────────────────────
     out_path = utilities.save_and_maybe_display_image(

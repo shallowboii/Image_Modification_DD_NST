@@ -1,11 +1,11 @@
 {
   "LSD": {
     "dd": {
-      "layer": ["layer3"],
+      "layer": ["layer1", "layer3"],
       "cycles": 3,
-      "pyramid_size": 4,
-      "pyramid_ratio": 1.8,
-      "num_gradient_ascent_iterations": 10,
+      "pyramid_size": 6,
+      "pyramid_ratio": 1.5,
+      "num_gradient_ascent_iterations": 12,
       "lr": 0.06,
       "dream_blend": 0.8
     },
@@ -17,16 +17,16 @@
   },
   "FAST": {
     "dd": {
-      "layer": ["layer2"],
+      "layer": ["layer1", "layer2"],
       "cycles": 2,
-      "pyramid_size": 3,
-      "pyramid_ratio": 1.7,
+      "pyramid_size": 5,
+      "pyramid_ratio": 1.6,
       "num_gradient_ascent_iterations": 8,
       "lr": 0.05,
       "dream_blend": 0.7
     },
     "nst": {
-      "style_path": "kaleidoscope.jpg",
+      "style_path": "cyberpunk.jpg",
       "num_steps": 100,
       "style_weight": 1e6
     }
@@ -35,15 +35,95 @@
     "dd": {
       "layer": ["layer1"],
       "cycles": 2,
-      "pyramid_size": 4,
-      "pyramid_ratio": 2.0,
-      "num_gradient_ascent_iterations": 1,
-      "lr": 0.01,
+      "pyramid_size": 5,
+      "pyramid_ratio": 1.8,
+      "num_gradient_ascent_iterations": 5,
+      "lr": 0.03,
       "dream_blend": 1.0
     },
     "nst": {
       "style_path": "kaleidoscope.jpg",
       "num_steps": 100,
+      "style_weight": 1e6
+    }
+  },
+  "GENTLE": {
+    "dd": {
+      "layer": ["layer1"],
+      "cycles": 1,
+      "pyramid_size": 4,
+      "pyramid_ratio": 1.6,
+      "num_gradient_ascent_iterations": 3,
+      "lr": 0.02,
+      "dream_blend": 0.4
+    },
+    "nst": {
+      "style_path": "kaleidoscope.jpg",
+      "num_steps": 80,
+      "style_weight": 5e5
+    }
+  },
+  "PORTRAIT": {
+    "dd": {
+      "layer": ["layer1"],
+      "cycles": 2,
+      "pyramid_size": 5,
+      "pyramid_ratio": 1.7,
+      "num_gradient_ascent_iterations": 4,
+      "lr": 0.02,
+      "dream_blend": 0.5
+    },
+    "nst": {
+      "style_path": "kaleidoscope.jpg",
+      "num_steps": 150,
+      "style_weight": 8e5
+    }
+  },
+  "DEEP": {
+    "dd": {
+      "layer": ["layer1", "layer4"],
+      "cycles": 3,
+      "pyramid_size": 7,
+      "pyramid_ratio": 1.4,
+      "num_gradient_ascent_iterations": 15,
+      "lr": 0.07,
+      "dream_blend": 0.9
+    },
+    "nst": {
+      "style_path": "cyberpunk.jpg",
+      "num_steps": 200,
+      "style_weight": 1.5e6
+    }
+  },
+  "PAINTERLY": {
+    "dd": {
+      "layer": ["layer1"],
+      "cycles": 1,
+      "pyramid_size": 4,
+      "pyramid_ratio": 1.6,
+      "num_gradient_ascent_iterations": 3,
+      "lr": 0.015,
+      "dream_blend": 0.25
+    },
+    "nst": {
+      "style_path": "kaleidoscope.jpg",
+      "num_steps": 400,
+      "style_weight": 2e6
+    }
+  },
+  "HEAVY": {
+    "dd": {
+      "layer": ["layer1", "layer2", "layer3"],
+      "cycles": 4,
+      "pyramid_size": 7,
+      "pyramid_ratio": 1.4,
+      "num_gradient_ascent_iterations": 20,
+      "lr": 0.06,
+      "dream_blend": 0.85
+    },
+    "nst": {
+      "style_path": "kaleidoscope.jpg",
+      "num_steps": 300,
       "style_weight": 1e6
     }
   }

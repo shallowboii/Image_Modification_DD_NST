@@ -18,8 +18,8 @@ class ResNet50(torch.nn.Module):
 
     def __init__(self, pretrained_weights, requires_grad=False, show_progress=False):
         super().__init__()
-        bruh =torch.cuda.is_available()
-        print(f"CUDA available: {bruh}")
+        cudaAvailable = torch.cuda.is_available()
+        print(f"CUDA available: {cudaAvailable}")
         if pretrained_weights == SupportedPretrainedWeights.MYIMAGENET.name:
             resnet50 = models.resnet50(pretrained=False,progress=show_progress)
             # Build the path to the weights file

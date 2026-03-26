@@ -39,6 +39,14 @@ DEFAULT_ADAPTIVE_CONFIG = {
 }
 
 
+# ── Tiny helper to avoid importing numpy just for a clamp ────────────────────
+
+class _Clamp:
+    @staticmethod
+    def clip_scalar(value: float, lo: float, hi: float) -> float:
+        return max(lo, min(hi, value))
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Controller
 # ─────────────────────────────────────────────────────────────────────────────
@@ -114,7 +122,7 @@ class AdaptiveController:
             adjustments["edge_density"] = round(ed, 4)
 
         # Step 5: clamp
-        lr = float(np.clip_scalar(lr, self.cfg["lr_min"], self.cfg["lr_max"]))
+        lr = float(_Clamp.clip_scalar(lr, self.cfg["lr_min"], self.cfg["lr_max"]))
 
         dd["lr"] = round(lr, 4)
         dd["num_gradient_ascent_iterations"] = iters
@@ -168,11 +176,3 @@ class AdaptiveController:
         })
 
         return nst
-
-
-# ── Tiny helper to avoid importing numpy just for a clamp ────────────────────
-
-class np:
-    @staticmethod
-    def clip_scalar(value: float, lo: float, hi: float) -> float:
-        return max(lo, min(hi, value))

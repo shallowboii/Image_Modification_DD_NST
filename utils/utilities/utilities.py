@@ -1,6 +1,7 @@
 import os
 import math
 import numbers
+import uuid
 
 import cv2 as cv
 from torchvision import transforms
@@ -80,9 +81,7 @@ def build_image_name(config):
     # img_name = f'{input_name}_width_{config["img_width"]}_model_{config["model_name"]}_{config["pretrained_weights"]}_{layers}_pyrsize_{config["pyramid_size"]}_pyrratio_{config["pyramid_ratio"]}_iter_{config["num_gradient_ascent_iterations"]}_lr_{config["lr"]}_shift_{config["spatial_shift_size"]}_smooth_{config["smoothing_coefficient"]}.jpg'
     # return img_name
     input_name = config['input_name'].rsplit('.', 1)[0]
-    layers = '_'.join("layer_3")
-    # Looks awful but makes the creation process transparent for other creators
-    img_name = f'{input_name}_width_{512}_model_MYRESNET_MYPRETRAINEDWEIGHT_{5}_pyrsize_{5}_pyrratio_{1.8}_iter_{15}_lr_{0.009}.jpg'
+    img_name = f'{uuid.uuid4().hex[:8]}_{input_name}.jpg'
     return img_name
 
 
@@ -120,11 +119,18 @@ def save_and_maybe_display_image(config, dump_img, name_modifier=None):
 #
 
 
-def fetch_and_prepare_model(model_type, pretrained_weights, device): #h
+_MODEL_CACHE: dict = {}
+
+def fetch_and_prepare_model(model_type, pretrained_weights, device):
+    """Load and cache the model. Subsequent calls with the same args return the cached instance."""
+    key = (model_type, pretrained_weights, str(device))
+    if key in _MODEL_CACHE:
+        return _MODEL_CACHE[key]
     if model_type == SupportedModels.RESNET50.name:
         model = ResNet50(pretrained_weights, requires_grad=False, show_progress=True).to(device)
     else:
         raise Exception('Model not yet supported.')
+    _MODEL_CACHE[key] = model
     return model
 
 def get_new_shape(config, base_shape, pyramid_level): #h
@@ -135,9 +141,11 @@ def get_new_shape(config, base_shape, pyramid_level): #h
     new_shape = np.round(np.float32(base_shape)*(pyramid_ratio**exponent)).astype(np.int32)
 
     if new_shape[0] < SHAPE_MARGIN or new_shape[1] < SHAPE_MARGIN:
-        print(f'Pyramid size {config["pyramid_size"]} with pyramid ratio {config["pyramid_ratio"]} gives too small pyramid levels with size={new_shape}')
-        print(f'Please change parameters.')
-        exit(0)
+        raise ValueError(
+            f'Pyramid size {config["pyramid_size"]} with pyramid ratio {config["pyramid_ratio"]} '
+            f'produces a pyramid level smaller than {SHAPE_MARGIN}px (got {new_shape}). '
+            f'Reduce pyramid_size or pyramid_ratio.'
+        )
 
     return new_shape
 

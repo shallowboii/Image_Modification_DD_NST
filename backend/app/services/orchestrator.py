@@ -14,12 +14,30 @@ from .adaptive_controller import AdaptiveController
 from utils.utilities import utilities
 from utils.utilities.constants import PRESET_FILE
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
 def load_presets():
     print("Loading presets from:", PRESET_FILE)
     if os.path.exists(PRESET_FILE):
         with open(PRESET_FILE) as f:
             return json.load(f)
     return {}
+
+
+def _merge(user_val, preset_val, default=None):
+    """Return user_val if not None, else preset_val if not None, else default.
+
+    Uses explicit None checks so that falsy-but-valid values (e.g. 0.0) are
+    respected instead of being silently replaced by the preset fallback.
+    """
+    if user_val is not None:
+        return user_val
+    if preset_val is not None:
+        return preset_val
+    return default
 
 
 def _upsample_to_original(current_np, orig_w, orig_h, process_w):
@@ -30,115 +48,11 @@ def _upsample_to_original(current_np, orig_w, orig_h, process_w):
     """
     out_h, out_w = current_np.shape[:2]
     if orig_w <= process_w:
-        # Original was not larger than what we processed at — nothing to upsample.
         return current_np
     pil_img = Image.fromarray((np.clip(current_np, 0, 1) * 255).astype(np.uint8))
     pil_img = pil_img.resize((orig_w, orig_h), Image.LANCZOS)
     print(f"[Resolution] Upsampled {out_w}x{out_h} → {orig_w}x{orig_h} (Lanczos)")
     return np.array(pil_img).astype(np.float32) / 255.0
-
-def run_cyclic_pipeline(input_path, parameters, dump_dir):
-    """
-    input_path: path to input image
-    parameters: dict of params (preset name and/or individual overrides)
-    dump_dir: where to save final result
-    returns final_output_path
-    """
-    print("Starting cyclic pipeline with input:", input_path, "preset:", parameters.get("preset", ""), "overrides:", parameters, "dump_dir:", dump_dir)
-    presets = load_presets()
-    preset = presets.get(parameters.get("preset", ""), {})
-    dd_preset = preset.get("dd", {})
-    nst_preset = preset.get("nst", {})
-    print("Using preset:", parameters.get("preset", ""))
-    process_w = parameters.get("img_width") or 1080
-    with Image.open(input_path) as _im:
-        orig_w, orig_h = _im.size  # (width, height)
-    print(f"[Resolution] Original: {orig_w}x{orig_h}  Processing at width: {process_w}")
-
-    img = utilities.load_image(input_path, target_shape=process_w)
-    current = img
-
-    # BUG FIX: parameters.get("cycles") is only set when the user sends individual params.
-    # When a preset is chosen, cycles lives inside dd_preset — check both.
-    num_cycles = parameters.get("cycles") or dd_preset.get("cycles", 3)
-
-    for c in range(num_cycles):
-        # prepare dd config
-        dd_conf = {
-            "model_name": parameters.get("model_name") or "RESNET50",
-            "pretrained_weights": parameters.get("pretrained_weights") or "MYIMAGENET",
-            "img_width": parameters.get("img_width") or 1080,
-            "pyramid_size": parameters.get("pyramid_size") or dd_preset.get("pyramid_size"),
-            "pyramid_ratio": parameters.get("pyramid_ratio") or dd_preset.get("pyramid_ratio"),
-            "num_gradient_ascent_iterations": parameters.get("num_gradient_ascent_iterations") or dd_preset.get("num_gradient_ascent_iterations"),
-            "lr": parameters.get("lr") or dd_preset.get("lr"),
-            "dream_blend": parameters.get("dream_blend") or dd_preset.get("dream_blend", 1.0),
-            "layers_to_use": [parameters.get("layer")] if parameters.get("layer") else dd_preset.get("layer"),
-            "use_noise": parameters.get("use_noise") or False,
-            "dump_dir": dump_dir,
-            "input_name": os.path.basename(input_path)
-        }
-        print(f"Cycle {c+1}/{num_cycles} [DeepDream] "
-              f"lr={dd_conf['lr']}  iters={dd_conf['num_gradient_ascent_iterations']}"
-              f"  pyramid={dd_conf['pyramid_size']}  blend={dd_conf['dream_blend']}")
-        current = run_deepdream_once(current, dd_conf)
-
-        # run NST
-        nst_conf = {
-            "style_path": parameters.get("style") or nst_preset.get("style_path"),
-            "num_steps": parameters.get("num_iterations_nst") or nst_preset.get("num_steps", 200),
-            "style_weight": parameters.get("style_weight") or nst_preset.get("style_weight", 1e6),
-        }
-        print(f"Cycle {c+1}/{num_cycles} [NST] "
-              f"steps={nst_conf['num_steps']}  style_w={nst_conf['style_weight']:.0e}")
-        current = run_nst(current, nst_conf["style_path"], num_steps=nst_conf["num_steps"],
-                          style_weight=nst_conf["style_weight"])
-
-    current = _upsample_to_original(current, orig_w, orig_h, process_w)
-
-    # save final
-    out_path = utilities.save_and_maybe_display_image(
-        {"dump_dir": dump_dir, "should_display": False, "input_name": os.path.basename(input_path)},
-        current
-    )
-    print("Final output saved to:", out_path)
-    return out_path
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Adaptive pipeline
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _build_base_configs(input_path, parameters, dump_dir):
-    """Extract the same base DD/NST configs used by the fixed pipeline."""
-    presets = load_presets()
-    preset = presets.get(parameters.get("preset", ""), {})
-    dd_preset = preset.get("dd", {})
-    nst_preset = preset.get("nst", {})
-
-    dd_conf = {
-        "model_name": parameters.get("model_name") or "RESNET50",
-        "pretrained_weights": parameters.get("pretrained_weights") or "MYIMAGENET",
-        "img_width": parameters.get("img_width") or 1080,
-        "pyramid_size": parameters.get("pyramid_size") or dd_preset.get("pyramid_size", 4),
-        "pyramid_ratio": parameters.get("pyramid_ratio") or dd_preset.get("pyramid_ratio", 1.8),
-        "num_gradient_ascent_iterations": parameters.get("num_gradient_ascent_iterations") or dd_preset.get("num_gradient_ascent_iterations", 10),
-        "lr": parameters.get("lr") or dd_preset.get("lr", 0.09),
-        "dream_blend": parameters.get("dream_blend") or dd_preset.get("dream_blend", 1.0),
-        "layers_to_use": [parameters.get("layer")] if parameters.get("layer") else dd_preset.get("layer"),
-        "use_noise": parameters.get("use_noise") or False,
-        "dump_dir": dump_dir,
-        "input_name": os.path.basename(input_path),
-    }
-
-    nst_conf = {
-        "style_path": parameters.get("style") or nst_preset.get("style_path"),
-        "num_steps": parameters.get("num_iterations_nst") or nst_preset.get("num_steps", 200),
-        "style_weight": parameters.get("style_weight") or nst_preset.get("style_weight", 1e6),
-        "tv_weight": parameters.get("tv_weight") or nst_preset.get("tv_weight", 5e-4),
-    }
-
-    return dd_conf, nst_conf
 
 
 def _save_intermediate(img_np, path):
@@ -149,14 +63,14 @@ def _save_intermediate(img_np, path):
 
 def _plot_metrics(experiment_log, save_path):
     """Save a multi-panel plot of key metrics and parameters over cycles."""
-    dd_entries = [e for e in experiment_log if e["stage"] == "deepdream"]
+    dd_entries  = [e for e in experiment_log if e["stage"] == "deepdream"]
     nst_entries = [e for e in experiment_log if e["stage"] == "nst"]
 
-    cycles = [e["cycle"] for e in dd_entries]
-    hf_ratios_dd = [e["metrics_before"].get("high_freq_ratio", 0) for e in dd_entries]
+    cycles         = [e["cycle"] for e in dd_entries]
+    hf_ratios_dd   = [e["metrics_before"].get("high_freq_ratio", 0) for e in dd_entries]
     edge_density_dd = [e["metrics_before"].get("edge_density", 0) for e in dd_entries]
-    dream_weights = [e["adjustments"].get("dream_weight", 1.0) for e in dd_entries]
-    tv_weights = [e["params_used"].get("tv_weight", 5e-4) for e in nst_entries]
+    dream_weights  = [e["adjustments"].get("dream_weight", 1.0) for e in dd_entries]
+    tv_weights     = [e["params_used"].get("tv_weight", 5e-4) for e in nst_entries]
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     fig.suptitle("Adaptive Pipeline — Metrics & Parameter Evolution", fontsize=13)
@@ -191,6 +105,126 @@ def _plot_metrics(experiment_log, save_path):
     plt.close(fig)
 
 
+def _build_base_configs(input_path, parameters, dump_dir, presets=None):
+    """Extract base DD/NST configs from parameters + preset.
+
+    Accepts an optional pre-loaded presets dict to avoid a redundant file read
+    when the caller already has it.
+    """
+    if presets is None:
+        presets = load_presets()
+    preset     = presets.get(parameters.get("preset", ""), {})
+    dd_preset  = preset.get("dd", {})
+    nst_preset = preset.get("nst", {})
+
+    dd_conf = {
+        "model_name":                      _merge(parameters.get("model_name"),      None,                              "RESNET50"),
+        "pretrained_weights":              _merge(parameters.get("pretrained_weights"), None,                            "MYIMAGENET"),
+        "img_width":                       _merge(parameters.get("img_width"),        None,                              1080),
+        "pyramid_size":                    _merge(parameters.get("pyramid_size"),     dd_preset.get("pyramid_size"),     4),
+        "pyramid_ratio":                   _merge(parameters.get("pyramid_ratio"),    dd_preset.get("pyramid_ratio"),    1.8),
+        "num_gradient_ascent_iterations":  _merge(parameters.get("num_gradient_ascent_iterations"), dd_preset.get("num_gradient_ascent_iterations"), 10),
+        "lr":                              _merge(parameters.get("lr"),               dd_preset.get("lr"),               0.09),
+        "dream_blend":                     _merge(parameters.get("dream_blend"),      dd_preset.get("dream_blend"),      1.0),
+        "layers_to_use":                   [parameters.get("layer")] if parameters.get("layer") else dd_preset.get("layer"),
+        "use_noise":                       parameters.get("use_noise") or False,
+        "dump_dir":                        dump_dir,
+        "input_name":                      os.path.basename(input_path),
+    }
+
+    nst_conf = {
+        "style_path":   _merge(parameters.get("style"),              nst_preset.get("style_path")),
+        "num_steps":    _merge(parameters.get("num_iterations_nst"), nst_preset.get("num_steps"),    200),
+        "style_weight": _merge(parameters.get("style_weight"),       nst_preset.get("style_weight"), 1e6),
+        "tv_weight":    _merge(parameters.get("tv_weight"),          nst_preset.get("tv_weight"),    5e-4),
+    }
+
+    return dd_conf, nst_conf
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Fixed cyclic pipeline
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_cyclic_pipeline(input_path, parameters, dump_dir):
+    """
+    input_path: path to input image
+    parameters: dict of params (preset name and/or individual overrides)
+    dump_dir:   where to save the final result
+    returns:    final output path
+    """
+    print("Starting cyclic pipeline  input:", input_path,
+          " preset:", parameters.get("preset", ""),
+          " dump_dir:", dump_dir)
+
+    presets    = load_presets()
+    preset     = presets.get(parameters.get("preset", ""), {})
+    dd_preset  = preset.get("dd", {})
+    nst_preset = preset.get("nst", {})
+
+    process_w = _merge(parameters.get("img_width"), None, 1080)
+    with Image.open(input_path) as _im:
+        orig_w, orig_h = _im.size
+    print(f"[Resolution] Original: {orig_w}x{orig_h}  Processing at width: {process_w}")
+
+    img     = utilities.load_image(input_path, target_shape=process_w)
+    current = img
+
+    num_cycles = _merge(parameters.get("cycles"), dd_preset.get("cycles"), 3)
+
+    for c in range(num_cycles):
+        # ── DeepDream ────────────────────────────────────────────────────────
+        dd_conf = {
+            "model_name":                     _merge(parameters.get("model_name"),      None,                              "RESNET50"),
+            "pretrained_weights":             _merge(parameters.get("pretrained_weights"), None,                            "MYIMAGENET"),
+            "img_width":                      process_w,
+            "pyramid_size":                   _merge(parameters.get("pyramid_size"),    dd_preset.get("pyramid_size"),     4),
+            "pyramid_ratio":                  _merge(parameters.get("pyramid_ratio"),   dd_preset.get("pyramid_ratio"),    1.8),
+            "num_gradient_ascent_iterations": _merge(parameters.get("num_gradient_ascent_iterations"), dd_preset.get("num_gradient_ascent_iterations"), 10),
+            "lr":                             _merge(parameters.get("lr"),              dd_preset.get("lr"),               0.09),
+            "dream_blend":                    _merge(parameters.get("dream_blend"),     dd_preset.get("dream_blend"),      1.0),
+            "layers_to_use":                  [parameters.get("layer")] if parameters.get("layer") else dd_preset.get("layer"),
+            "use_noise":                      parameters.get("use_noise") or False,
+            "dump_dir":                       dump_dir,
+            "input_name":                     os.path.basename(input_path),
+        }
+        print(f"Cycle {c+1}/{num_cycles} [DeepDream] "
+              f"lr={dd_conf['lr']}  iters={dd_conf['num_gradient_ascent_iterations']}"
+              f"  pyramid={dd_conf['pyramid_size']}  blend={dd_conf['dream_blend']}")
+        current = run_deepdream_once(current, dd_conf)
+
+        # ── NST ──────────────────────────────────────────────────────────────
+        style_path  = _merge(parameters.get("style"), nst_preset.get("style_path"))
+        num_steps   = _merge(parameters.get("num_iterations_nst"), nst_preset.get("num_steps"),    200)
+        style_weight = _merge(parameters.get("style_weight"),      nst_preset.get("style_weight"), 1e6)
+        tv_weight   = _merge(parameters.get("tv_weight"),          nst_preset.get("tv_weight"),    5e-4)
+
+        if not style_path:
+            raise ValueError(
+                "No style image provided and no preset style configured. "
+                "Upload a style image or choose a preset that includes one."
+            )
+
+        print(f"Cycle {c+1}/{num_cycles} [NST] "
+              f"steps={num_steps}  style_w={style_weight:.0e}  tv_w={tv_weight:.2e}")
+        current = run_nst(current, style_path,
+                          num_steps=num_steps,
+                          style_weight=style_weight,
+                          tv_weight=tv_weight)
+
+    current  = _upsample_to_original(current, orig_w, orig_h, process_w)
+    out_path = utilities.save_and_maybe_display_image(
+        {"dump_dir": dump_dir, "should_display": False, "input_name": os.path.basename(input_path)},
+        current,
+    )
+    print("Final output saved to:", out_path)
+    return out_path
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Adaptive pipeline
+# ─────────────────────────────────────────────────────────────────────────────
+
 def run_adaptive_cyclic_pipeline(
     input_path: str,
     parameters: dict,
@@ -208,12 +242,12 @@ def run_adaptive_cyclic_pipeline(
 
     Parameters
     ----------
-    input_path       : absolute path to the input content image
-    parameters       : same parameter dict used by the fixed pipeline
-    dump_dir         : directory for the final result and experiment artifacts
-    adaptive_config  : optional dict to override AdaptiveController defaults
+    input_path        : absolute path to the input content image
+    parameters        : same parameter dict used by the fixed pipeline
+    dump_dir          : directory for the final result and experiment artifacts
+    adaptive_config   : optional dict to override AdaptiveController defaults
     save_intermediates: if True, save one JPEG per (cycle, stage) pair
-    plot_metrics     : if True, save a metrics/parameter evolution plot
+    plot_metrics      : if True, save a metrics/parameter evolution plot
 
     Returns
     -------
@@ -221,22 +255,31 @@ def run_adaptive_cyclic_pipeline(
     """
     os.makedirs(dump_dir, exist_ok=True)
 
-    # Load presets now to resolve num_cycles (same fix as in run_cyclic_pipeline)
-    presets = load_presets()
-    preset = presets.get(parameters.get("preset", ""), {})
-    num_cycles = parameters.get("cycles") or preset.get("dd", {}).get("cycles", 3)
+    # Load presets once — reused by both num_cycles resolution and _build_base_configs
+    presets    = load_presets()
+    preset     = presets.get(parameters.get("preset", ""), {})
+    num_cycles = _merge(parameters.get("cycles"), preset.get("dd", {}).get("cycles"), 3)
 
     print(f"\n[Adaptive] Starting adaptive pipeline  cycles={num_cycles}  input={input_path}")
 
-    base_dd_conf, base_nst_conf = _build_base_configs(input_path, parameters, dump_dir)
+    base_dd_conf, base_nst_conf = _build_base_configs(
+        input_path, parameters, dump_dir, presets=presets
+    )
+
+    if not base_nst_conf["style_path"]:
+        raise ValueError(
+            "No style image provided and no preset style configured. "
+            "Upload a style image or choose a preset that includes one."
+        )
+
     controller = AdaptiveController(base_dd_conf, base_nst_conf, config=adaptive_config)
 
-    process_w = parameters.get("img_width") or 1080
+    process_w = _merge(parameters.get("img_width"), None, 1080)
     with Image.open(input_path) as _im:
         orig_w, orig_h = _im.size
     print(f"[Resolution] Original: {orig_w}x{orig_h}  Processing at width: {process_w}")
 
-    img = utilities.load_image(input_path, target_shape=process_w)
+    img     = utilities.load_image(input_path, target_shape=process_w)
     current = img
 
     for c in range(1, num_cycles + 1):
@@ -275,6 +318,7 @@ def run_adaptive_cyclic_pipeline(
             nst_conf["style_path"],
             num_steps=nst_conf["num_steps"],
             style_weight=nst_conf["style_weight"],
+            tv_weight=nst_conf["tv_weight"],   # adaptive TV weight now forwarded
         )
 
         if save_intermediates:

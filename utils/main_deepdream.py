@@ -69,16 +69,17 @@ def deep_dream_static_image(config, img):
     try:
         layer_ids_to_use = [model.layer_names.index(layer_name) for layer_name in config['layers_to_use']] # amelyik layernek az aktivacioit akarjuk felerősíteni
     except Exception as e:  # making sure you set the correct layer name for this specific model
-        print(f'Invalid layer names {[layer_name for layer_name in config["layers_to_use"]]}.')
-        print(f'Available layers for model {config["model_name"]} are {model.layer_names}.')
-        return
+        raise ValueError(
+            f'Invalid layer names {config["layers_to_use"]}. '
+            f'Available layers for model {config["model_name"]}: {model.layer_names}'
+        ) from e
 
     if img is None:  # betölteni a képet
         img_path = utilities.parse_input_file(config['input'])
         
         img = utilities.load_image(img_path, target_shape=config['img_width']) #beolvas méretre vágja utana mivel rgb értékek vannak ezert 0-255ig vannak az egyes pixel értékek
         # elosztja 255 hogy 0-1 közötti értékekkel dolgozzunk
-        print("Use noise is: "+config['use_noise'])
+        print(f"Use noise is: {config['use_noise']}")
         if config['use_noise']:
             shape = img.shape
             img = np.random.uniform(low=0.0, high=1.0, size=shape).astype(np.float32)

@@ -34,3 +34,6 @@ __pycache__/
 frontend/node_modules
 
 Thesis
+
+#Logs
+backend/results/*.json

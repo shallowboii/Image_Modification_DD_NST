@@ -73,31 +73,31 @@ def _plot_metrics(experiment_log, save_path):
     tv_weights     = [e["params_used"].get("tv_weight", 5e-4) for e in nst_entries]
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-    fig.suptitle("Adaptive Pipeline — Metrics & Parameter Evolution", fontsize=13)
+    fig.suptitle("Adaptív pipeline — metrikák és paraméterek alakulása", fontsize=13)
 
     axes[0, 0].plot(cycles, hf_ratios_dd, marker="o", color="coral")
-    axes[0, 0].axhline(0.35, linestyle="--", color="gray", linewidth=0.8, label="threshold")
-    axes[0, 0].set_title("High-Freq Ratio (before DD)")
-    axes[0, 0].set_xlabel("Cycle")
+    axes[0, 0].axhline(0.35, linestyle="--", color="gray", linewidth=0.8, label="küszöb")
+    axes[0, 0].set_title("Magas frekvenciás arány (DD előtt)")
+    axes[0, 0].set_xlabel("Ciklus")
     axes[0, 0].legend()
     axes[0, 0].grid(alpha=0.3)
 
     axes[0, 1].plot(cycles, edge_density_dd, marker="o", color="steelblue")
-    axes[0, 1].axhline(0.18, linestyle="--", color="gray", linewidth=0.8, label="threshold")
-    axes[0, 1].set_title("Edge Density (before DD)")
-    axes[0, 1].set_xlabel("Cycle")
+    axes[0, 1].axhline(0.18, linestyle="--", color="gray", linewidth=0.8, label="küszöb")
+    axes[0, 1].set_title("Élsűrűség (DD előtt)")
+    axes[0, 1].set_xlabel("Ciklus")
     axes[0, 1].legend()
     axes[0, 1].grid(alpha=0.3)
 
     axes[1, 0].plot(cycles, dream_weights, marker="s", color="seagreen")
-    axes[1, 0].set_title("Dream Weight (DD intensity)")
-    axes[1, 0].set_xlabel("Cycle")
+    axes[1, 0].set_title("Dream Weight (DD intenzitás)")
+    axes[1, 0].set_xlabel("Ciklus")
     axes[1, 0].grid(alpha=0.3)
 
     nst_cycles = [e["cycle"] for e in nst_entries]
     axes[1, 1].plot(nst_cycles, tv_weights, marker="s", color="mediumpurple")
-    axes[1, 1].set_title("NST TV Weight (smoothness)")
-    axes[1, 1].set_xlabel("Cycle")
+    axes[1, 1].set_title("NST TV súly (simaság)")
+    axes[1, 1].set_xlabel("Ciklus")
     axes[1, 1].grid(alpha=0.3)
 
     plt.tight_layout()

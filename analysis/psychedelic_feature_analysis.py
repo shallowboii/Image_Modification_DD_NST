@@ -5,8 +5,8 @@ Quantitative analysis comparing original and processed images across
 psychedelic-relevant visual metrics.
 
 Scientific basis:
-  - Spatial frequency slope (α): Billock & Tsou (2012), Field (1987)
-  - Fractal dimension (D):        Klüver form constants, box-counting method
+  - Spatial frequency slope (α): Field (1987), Billock & Tsou (2012)
+  - Fractal dimension (D):        box-counting method on edge maps
   - Saturation enhancement:       5D-ASC questionnaire subscale (Dittrich 1998)
   - Autocorrelation periodicity:  Ermentrout–Cowan (1979) lattice/grating constants
 
@@ -49,7 +49,7 @@ import matplotlib.gridspec as gridspec
 # Image loading
 # ─────────────────────────────────────────────────────────────────────────────
 
-_MAX_ANALYSIS_DIM = 1024  # cap resolution for metric computation — values are statistically stable above this
+_MAX_ANALYSIS_DIM = 1024  # cap resolution for metric computation
 
 def load_image(path: str) -> np.ndarray:
     """Load image as float32 HxWx3 array in [0, 1], downsampled to _MAX_ANALYSIS_DIM on the long edge."""
@@ -69,17 +69,25 @@ def spatial_frequency_slope(img: np.ndarray) -> tuple[float, np.ndarray, np.ndar
     """
     Compute the slope α of the radially averaged power spectrum in log-log space.
 
-    Natural images: α ≈ 2.0  (1/f² spectrum)
-    After Deep Dream: α decreases → flatter spectrum → more high-frequency detail
-    After drug hallucinations: α reported 1.3–1.7 (more HF energy, complex patterns)
+    The image luminance channel is Fourier-transformed, the 2D power spectrum
+    |F(u,v)|² is radially averaged into 1D bins, and a straight line is fitted
+    in log₁₀(frequency) vs log₁₀(power) space.
+
+    Natural images:    α ≈ −2.0  (1/f² power spectrum — Field, 1987)
+    After Deep Dream:  α typically becomes less negative (flatter spectrum,
+                       more high-frequency energy)
+
+    NOTE on convention: the literature sometimes quotes the *amplitude* spectrum
+    slope (~−1.0) rather than the *power* spectrum slope (~−2.0). This function
+    returns the POWER spectrum slope, which is negative for natural images.
 
     Returns
     -------
-    alpha       : slope of log10(power) vs log10(frequency) line fit
-    freqs       : 1D radial frequency bins used for the fit
-    power       : corresponding mean power values
+    alpha : slope of log10(power) vs log10(frequency) line fit  (negative!)
+    freqs : 1D radial frequency bins used for the fit
+    power : corresponding mean power values
     """
-    # Convert to luminance
+    # Convert to luminance (ITU-R BT.601)
     lum = 0.299 * img[:, :, 0] + 0.587 * img[:, :, 1] + 0.114 * img[:, :, 2]
 
     h, w = lum.shape
@@ -94,17 +102,15 @@ def spatial_frequency_slope(img: np.ndarray) -> tuple[float, np.ndarray, np.ndar
 
     max_r = min(cy, cx)
     radial_bins = np.zeros(max_r)
-    counts = np.zeros(max_r)
     for r in range(max_r):
         mask = radius == r
         radial_bins[r] = power[mask].mean()
-        counts[r] = mask.sum()
 
     # Use frequencies from 1 to max_r (skip DC component at 0)
     freqs = np.arange(1, max_r)
     pwr = radial_bins[1:max_r]
 
-    # Fit log-log line (exclude near-DC and very high freq noise)
+    # Fit log-log line — exclude near-DC and very high freq noise
     fit_start = max(1, max_r // 20)
     fit_end = max_r - max_r // 10
     log_f = np.log10(freqs[fit_start:fit_end])
@@ -119,34 +125,75 @@ def spatial_frequency_slope(img: np.ndarray) -> tuple[float, np.ndarray, np.ndar
 # Metric 2: Fractal Dimension (Box-counting)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def fractal_dimension(img: np.ndarray, threshold: float = 0.1) -> float:
+def _sobel_gradient_magnitude(lum: np.ndarray) -> np.ndarray:
+    """
+    Compute gradient magnitude using Sobel-like 3x3 kernels.
+
+    FIX: the original code used np.diff (simple forward differences),
+    which is noisy and not the standard method in the literature.
+    Sobel kernels give a weighted central-difference estimate and
+    are the conventional choice for edge-based fractal dimension
+    (see e.g. box-counting implementations in FracLac for ImageJ).
+    """
+    # Sobel kernels  (horizontal = edges along x, vertical = edges along y)
+    # We use a simple convolution via slicing to avoid scipy dependency.
+    # Gx = [[-1, 0, +1], [-2, 0, +2], [-1, 0, +1]] / 4
+    # Gy = [[-1, -2, -1], [0, 0, 0], [+1, +2, +1]] / 4
+    padded = np.pad(lum, 1, mode="reflect")
+    gx = (
+        -1 * padded[:-2, :-2] + 1 * padded[:-2, 2:]
+        -2 * padded[1:-1, :-2] + 2 * padded[1:-1, 2:]
+        -1 * padded[2:, :-2] + 1 * padded[2:, 2:]
+    ) / 4.0
+    gy = (
+        -1 * padded[:-2, :-2] - 2 * padded[:-2, 1:-1] - 1 * padded[:-2, 2:]
+        +1 * padded[2:, :-2] + 2 * padded[2:, 1:-1] + 1 * padded[2:, 2:]
+    ) / 4.0
+    return np.sqrt(gx ** 2 + gy ** 2)
+
+
+def fractal_dimension(img: np.ndarray, threshold: float | None = None) -> float:
     """
     Estimate fractal dimension of the image edge structure using box-counting.
 
     Steps:
-      1. Compute gradient magnitude (edge map)
-      2. Binarize at `threshold`
-      3. Count boxes of decreasing size that contain at least one edge pixel
+      1. Compute gradient magnitude (Sobel-based edge map)
+      2. Binarize — if no threshold given, use adaptive Otsu-like threshold
+      3. Count boxes of decreasing size containing at least one edge pixel
       4. Fit slope in log(count) vs log(1/box_size) space
 
-    Natural scenes:       D ≈ 1.2 – 1.4
-    Klüver form constants: D ≈ 1.5 – 1.8  (more complex, self-similar structure)
+    FIX vs original:
+      - Uses Sobel gradient instead of simple np.diff
+      - Uses adaptive threshold (median + 1σ of gradient) if no threshold given,
+        instead of hard-coded 0.1
+
+    Parameters
+    ----------
+    threshold : binarization threshold on gradient magnitude. If None, an
+                adaptive threshold is computed as  median(grad) + std(grad).
     """
     lum = 0.299 * img[:, :, 0] + 0.587 * img[:, :, 1] + 0.114 * img[:, :, 2]
 
-    # Gradient magnitude
-    gx = np.diff(lum, axis=1, prepend=lum[:, :1])
-    gy = np.diff(lum, axis=0, prepend=lum[:1, :])
-    edge_map = (np.sqrt(gx ** 2 + gy ** 2) > threshold).astype(np.uint8)
+    grad = _sobel_gradient_magnitude(lum)
 
-    # Box sizes as powers of 2 up to min dimension
+    # Adaptive threshold if not specified
+    if threshold is None:
+        threshold = float(np.median(grad) + np.std(grad))
+
+    edge_map = (grad > threshold).astype(np.uint8)
+
+    # If edge map is almost empty or almost full, the metric is unreliable
+    edge_fraction = edge_map.mean()
+    if edge_fraction < 0.005 or edge_fraction > 0.95:
+        return float("nan")
+
+    # Box sizes as powers of 2 up to min dimension / 4
     h, w = edge_map.shape
     max_box = min(h, w) // 4
     box_sizes = [2 ** k for k in range(1, int(np.log2(max_box)) + 1)]
 
     counts = []
     for bs in box_sizes:
-        # Count non-empty boxes
         n_y = h // bs
         n_x = w // bs
         trimmed = edge_map[:n_y * bs, :n_x * bs]
@@ -169,7 +216,7 @@ def fractal_dimension(img: np.ndarray, threshold: float = 0.1) -> float:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Metric 3: Saturation (already in image_analyzer — reimplemented standalone)
+# Metric 3: Saturation
 # ─────────────────────────────────────────────────────────────────────────────
 
 def mean_saturation(img: np.ndarray) -> float:
@@ -186,17 +233,26 @@ def mean_saturation(img: np.ndarray) -> float:
 # Metric 4: Autocorrelation Periodicity
 # ─────────────────────────────────────────────────────────────────────────────
 
-def autocorrelation_peak_ratio(img: np.ndarray, center_exclusion: int = 5) -> float:
+def autocorrelation_peak_ratio(img: np.ndarray, center_exclusion_ratio: float = 0.05) -> float:
     """
     Measure the strength of periodic structure via 2D normalized autocorrelation.
 
-    Lattice / grating hallucinations (Klüver form constants 1 and 3) produce
+    Lattice / grating hallucinations (Klüver form constants I and III) produce
     strong off-center peaks in the autocorrelation map.
 
     Returns the ratio: max_off_center_peak / mean_background
     Higher value → stronger periodic / repeating pattern.
 
-    center_exclusion : radius (pixels) around DC peak to ignore
+    FIX vs original:
+      - center_exclusion is now PROPORTIONAL to image size (default 5% of
+        shorter dimension) instead of a fixed 5-pixel radius, which was
+        far too small for images of 512+ pixels and caused the DC peak
+        to leak into the "off-center" region.
+
+    Parameters
+    ----------
+    center_exclusion_ratio : fraction of min(h, w) to use as exclusion radius
+                             around the DC peak (default 0.05 = 5%).
     """
     lum = 0.299 * img[:, :, 0] + 0.587 * img[:, :, 1] + 0.114 * img[:, :, 2]
 
@@ -211,15 +267,18 @@ def autocorrelation_peak_ratio(img: np.ndarray, center_exclusion: int = 5) -> fl
         return 1.0
     ac_norm = (ac - ac_min) / (ac_max - ac_min)
 
-    # Mask the central DC peak
+    # Mask the central DC peak — proportional to image size
     h, w = ac_norm.shape
     cy, cx = h // 2, w // 2
+    center_exclusion = max(5, int(min(h, w) * center_exclusion_ratio))
+
     ys, xs = np.mgrid[:h, :w]
     dist = np.sqrt((ys - cy) ** 2 + (xs - cx) ** 2)
     ac_masked = ac_norm.copy()
     ac_masked[dist < center_exclusion] = 0.0
 
     peak = ac_masked.max()
+
     # Mean of non-masked, non-peak region
     background_mask = (dist >= center_exclusion) & (ac_masked < peak * 0.9)
     bg_mean = ac_masked[background_mask].mean() if background_mask.any() else 1e-6
@@ -270,10 +329,10 @@ METRIC_LABELS = {
     "autocorr_peak_ratio":      "Autocorr. peak ratio",
 }
 
-# Direction expected for psychedelic-like outputs
+# Direction expected if Deep Dream adds hallucination-like features
 EXPECTED_DIRECTION = {
-    "spatial_freq_slope_alpha": "down (less steep = more HF energy)",
-    "fractal_dimension":        "up (more complex patterns)",
+    "spatial_freq_slope_alpha": "up (less negative = flatter spectrum, more HF energy)",
+    "fractal_dimension":        "up (more complex edge patterns)",
     "mean_saturation":          "up (more vivid colors)",
     "autocorr_peak_ratio":      "up (more periodic structure)",
 }
@@ -298,7 +357,6 @@ def print_report(result: dict, label: str = ""):
 
 
 def save_report_json(results: list[dict], out_path: str):
-    # Remove non-serialisable numpy arrays before dumping
     clean = []
     for r in results:
         rc = {}
@@ -363,10 +421,9 @@ def plot_single(result: dict, label: str = "", out_path: str | None = None):
     ax_spec.set_ylabel("Power",             color="#aaa", fontsize=8)
     ax_spec.legend(facecolor="#2a2a2a", labelcolor="white", fontsize=8)
 
-    # Annotate slope α
     ax_spec.text(0.05, 0.12,
-        f"alpha before: {result['before']['spatial_freq_slope_alpha']:.2f}\n"
-        f"alpha after:  {result['after']['spatial_freq_slope_alpha']:.2f}",
+        f"α before: {result['before']['spatial_freq_slope_alpha']:.2f}\n"
+        f"α after:  {result['after']['spatial_freq_slope_alpha']:.2f}",
         transform=ax_spec.transAxes, color="white", fontsize=8,
         verticalalignment="bottom",
         bbox=dict(facecolor="#111", alpha=0.6, edgecolor="none"))
@@ -378,7 +435,7 @@ def plot_single(result: dict, label: str = "", out_path: str | None = None):
     colors  = ["#7c6aff" if d >= 0 else "#ff6a6a" for d in deltas]
     bars = ax_bar.barh(labels, deltas, color=colors, height=0.5)
     ax_bar.axvline(0, color="#888", linewidth=0.8, linestyle="--")
-    ax_bar.set_title("Metric Deltas (output - input)", color="white", fontsize=10)
+    ax_bar.set_title("Metric Deltas (output − input)", color="white", fontsize=10)
     ax_bar.set_xlabel("Delta value", color="#aaa", fontsize=8)
     for bar, val in zip(bars, deltas):
         ax_bar.text(
@@ -423,12 +480,13 @@ def plot_batch_comparison(results: list[dict], out_path: str | None = None):
     for i, (res, color) in enumerate(zip(results, palette)):
         deltas = [res["delta"][k] for k in metric_keys]
         offset = (i - n_presets / 2 + 0.5) * width
-        bars = ax.bar(x + offset, deltas, width * 0.9, label=res.get("label", f"Preset {i+1}"), color=color, alpha=0.85)
+        ax.bar(x + offset, deltas, width * 0.9,
+               label=res.get("label", f"Preset {i+1}"), color=color, alpha=0.85)
 
     ax.axhline(0, color="#888", linewidth=0.8, linestyle="--")
     ax.set_xticks(x)
     ax.set_xticklabels([METRIC_LABELS[k] for k in metric_keys], color="white", fontsize=9)
-    ax.set_ylabel("Delta (output - input)", color="#aaa")
+    ax.set_ylabel("Delta (output − input)", color="#aaa")
     ax.set_title("Psychedelic Feature Deltas by Preset", color="white", fontsize=13)
     ax.legend(facecolor="#2a2a2a", labelcolor="white", fontsize=9)
 
@@ -463,7 +521,6 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if args.input:
-        # ── Single mode ──────────────────────────────────────────────────────
         if not args.output:
             print("Error: --output is required in single mode.", file=sys.stderr)
             sys.exit(1)
@@ -480,7 +537,6 @@ def main():
         save_report_json([result], str(out_dir / f"report_{args.label or 'result'}.json"))
 
     else:
-        # ── Batch mode ───────────────────────────────────────────────────────
         with open(args.batch, encoding="utf-8") as fh:
             entries = json.load(fh)
 
@@ -494,12 +550,10 @@ def main():
             all_results.append(result)
 
         if not args.no_plot:
-            # Individual plots
             for res in all_results:
                 lbl = res.get("label", "unknown").replace(" ", "_")
                 plot_single(res, label=res.get("label", ""),
                             out_path=str(out_dir / f"analysis_{lbl}.png"))
-            # Combined comparison
             plot_batch_comparison(all_results,
                                   out_path=str(out_dir / "preset_comparison.png"))
 

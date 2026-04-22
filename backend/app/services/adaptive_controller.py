@@ -135,7 +135,7 @@ class AdaptiveController:
             "stage": "deepdream",
             "metrics_before": metrics,
             "adjustments": adjustments,
-            "params_used": {k: dd[k] for k in ("lr", "num_gradient_ascent_iterations", "pyramid_size")},
+            "params_used": {k: dd[k] for k in ("lr", "num_gradient_ascent_iterations", "pyramid_size", "dream_blend")},
         })
 
         return dd

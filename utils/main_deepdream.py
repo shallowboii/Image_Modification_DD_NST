@@ -86,24 +86,34 @@ def deep_dream_static_image(config, img):
 
     img = utilities.pre_process_numpy_img(img) #normalize
     base_shape = img.shape[:-1]  # save initial height and width
+    original_img = img.copy()  # full-resolution reference for octave detail-injection
 
-    # Note: simply rescaling the whole result (and not only details, see original implementation) gave me better results
-    # Going from smaller to bigger resolution (from pyramid top to bottom)
+    # Classic DeepDream octave scheme: preserve high-frequency detail across scales.
+    # At each octave we run gradient ascent on the downscaled base, then extract the
+    # "detail" (dreamed - downscaled_base) and add it back to the next octave's
+    # downscaled base. This keeps the original full-res sharpness intact instead of
+    # throwing it away on the first downscale.
+    detail = np.zeros_like(cv.resize(
+        original_img,
+        (utilities.get_new_shape(config, base_shape, 0)[1],
+         utilities.get_new_shape(config, base_shape, 0)[0])
+    ))
+
     for pyramid_level in range(config['pyramid_size']):
-        new_shape = utilities.get_new_shape(config, base_shape, pyramid_level) # piramis kép méretének módosítása (mekkora kell hogy legyen)
-        #a legkisebbel kezdi es utana novekszik ahogy megy a pyramis
-        img = cv.resize(img, (new_shape[1], new_shape[0])) # ujra meretezi
-        input_tensor = utilities.pytorch_input_adapter(img, DEVICE) #tensorra plusz devicera
+        new_shape = utilities.get_new_shape(config, base_shape, pyramid_level)
+        octave_base = cv.resize(original_img, (new_shape[1], new_shape[0]))
 
-        for iteration in range(config['num_gradient_ascent_iterations']): #gradient ascent iteraciok szama
-            #h_shift, w_shift = np.random.randint(-config['spatial_shift_size'], config['spatial_shift_size'] + 1, 2)
-            #input_tensor = utils.random_circular_spatial_shift(input_tensor, h_shift, w_shift)
+        if detail.shape[:2] != octave_base.shape[:2]:
+            detail = cv.resize(detail, (new_shape[1], new_shape[0]))
 
-            gradient_ascent(config, model, input_tensor, layer_ids_to_use, iteration) #maga a gradient ascent
+        img = octave_base + detail
+        input_tensor = utilities.pytorch_input_adapter(img, DEVICE)
 
-            #input_tensor = utils.random_circular_spatial_shift(input_tensor, h_shift, w_shift, should_undo=True)
+        for iteration in range(config['num_gradient_ascent_iterations']):
+            gradient_ascent(config, model, input_tensor, layer_ids_to_use, iteration)
 
         img = utilities.pytorch_output_adapter(input_tensor)
+        detail = img - octave_base
 
     return utilities.post_process_numpy_img(img)
 

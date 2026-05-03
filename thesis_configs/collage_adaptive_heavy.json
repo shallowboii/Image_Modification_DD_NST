@@ -1,0 +1,4 @@
+[
+  {"path": "analysis/experiments/adaptive_vs_fixed/HEAVY/yosemite__fixed.jpg",    "label": "Fix pipeline (HEAVY)"},
+  {"path": "analysis/experiments/adaptive_vs_fixed/HEAVY/yosemite__adaptive.jpg", "label": "Adaptív pipeline (HEAVY)"}
+]

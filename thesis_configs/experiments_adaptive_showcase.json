@@ -1,0 +1,4 @@
+[
+  {"category": "adaptive_vs_fixed", "preset": "HEAVY", "mode": "fixed",    "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"},
+  {"category": "adaptive_vs_fixed", "preset": "HEAVY", "mode": "adaptive", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"}
+]

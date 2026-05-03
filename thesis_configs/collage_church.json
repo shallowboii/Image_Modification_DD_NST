@@ -1,0 +1,10 @@
+[
+  {"path": "backend/results/15/08b267a3_d9f1ac62-47ed-406c-adee-eddbc977907e_chruch.jpg", "label": "GENTLE"},
+  {"path": "backend/results/16/0e4b1d9c_aca2b936-8282-4a0c-88b8-35963696ce5a_chruch.jpg", "label": "FAST"},
+  {"path": "backend/results/18/a304c075_7c8c2e9e-3000-4601-8555-5d2dc2cad464_chruch.jpg", "label": "Default"},
+  {"path": "backend/results/20/004cb43d_1992db04-3df4-410e-a553-e2cd729dd06e_chruch.jpg", "label": "PORTRAIT"},
+  {"path": "backend/results/22/55451bed_0997dce2-2302-4142-b2c8-96502f406fe1_chruch.jpg", "label": "LSD"},
+  {"path": "backend/results/24/06f23e48_19479fc8-1d7b-400e-a5c6-ff7b86d75cfb_chruch.jpg", "label": "DEEP"},
+  {"path": "backend/results/26/0754c70c_34edf134-4093-4deb-8458-0897746ecca7_chruch.jpg", "label": "PAINTERLY"},
+  {"path": "backend/results/28/00ed9e07_4a02438e-62ce-44f1-9d01-8e10bccc90fd_chruch.jpg", "label": "HEAVY"}
+]

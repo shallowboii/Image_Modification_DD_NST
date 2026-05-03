@@ -1,0 +1,10 @@
+[
+  {"category": "preset_timing", "preset": "GENTLE",    "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"},
+  {"category": "preset_timing", "preset": "FAST",      "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"},
+  {"category": "preset_timing", "preset": "Default",   "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"},
+  {"category": "preset_timing", "preset": "PORTRAIT",  "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"},
+  {"category": "preset_timing", "preset": "PAINTERLY", "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"},
+  {"category": "preset_timing", "preset": "LSD",       "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"},
+  {"category": "preset_timing", "preset": "DEEP",      "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"},
+  {"category": "preset_timing", "preset": "HEAVY",     "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"}
+]

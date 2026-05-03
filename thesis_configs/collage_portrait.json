@@ -1,0 +1,4 @@
+[
+  {"path": "utils/data/in-images/potrait_blue.jpg", "label": "Eredeti"},
+  {"path": "backend/results/34/f4f1c019_f90bac19-0eee-4231-92cb-e7ce3d21b137_potrait_blue.jpg", "label": "PORTRAIT preset"}
+]

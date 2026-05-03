@@ -5,7 +5,7 @@ runs each through the orchestrator, saves the result to a structured folder
 tree, and records runtime in a single report file.
 
 Usage:
-    python analysis/run_experiments.py analysis/experiments_config.json
+    python analysis/run_experiments.py thesis_configs/experiments_config.json
 
 Output layout:
     analysis/experiments/
@@ -55,6 +55,8 @@ def _target_path(task):
 
     if category == "preset_comparison":
         return EXPERIMENTS_DIR / category / stem_in / f"{preset}.jpg"
+    if category == "preset_timing":
+        return EXPERIMENTS_DIR / category / f"{preset}.jpg"
     if category == "multi_input":
         return EXPERIMENTS_DIR / category / preset / f"{stem_in}.jpg"
     if category == "multi_style":
@@ -77,11 +79,12 @@ def _run_one(task):
     dump_dir = EXPERIMENTS_DIR / "_tmp" / f"{int(time.time()*1000)}_{Path(input_path).stem}_{preset}_{mode}"
     dump_dir.mkdir(parents=True, exist_ok=True)
 
+    timing: dict = {}
     t0 = time.perf_counter()
     if mode == "adaptive":
-        out = run_adaptive_cyclic_pipeline(input_path, params, str(dump_dir), plot_metrics=True)
+        out = run_adaptive_cyclic_pipeline(input_path, params, str(dump_dir), plot_metrics=True, timing_out=timing)
     else:
-        out = run_cyclic_pipeline(input_path, params, str(dump_dir))
+        out = run_cyclic_pipeline(input_path, params, str(dump_dir), timing_out=timing)
     elapsed = time.perf_counter() - t0
 
     target = _target_path(task)
@@ -104,6 +107,8 @@ def _run_one(task):
         "output":    _rel(target),
         "log":       _rel(log_target) if log_target else None,
         "runtime_s": round(elapsed, 2),
+        "dd_s":      round(timing.get("dd_s", 0.0), 2),
+        "nst_s":     round(timing.get("nst_s", 0.0), 2),
     }
 
 
@@ -114,6 +119,10 @@ def main():
 
     cfg_path = Path(sys.argv[1])
     tasks = json.loads(cfg_path.read_text())
+
+    global REPORT_PATH
+    if len(sys.argv) >= 3:
+        REPORT_PATH = Path(sys.argv[2])
 
     EXPERIMENTS_DIR.mkdir(parents=True, exist_ok=True)
     results = []

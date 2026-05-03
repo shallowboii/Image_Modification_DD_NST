@@ -1,0 +1,6 @@
+[
+  {"path": "analysis/experiments/multi_input/LSD/chruch.jpg",        "label": "Katedrális"},
+  {"path": "analysis/experiments/multi_input/LSD/mountain_rays.jpg", "label": "Hegyi táj"},
+  {"path": "analysis/experiments/multi_input/LSD/dahlia.jpg",        "label": "Dahlia virág"},
+  {"path": "analysis/experiments/multi_input/LSD/waterfall.jpg",     "label": "Vízesés"}
+]

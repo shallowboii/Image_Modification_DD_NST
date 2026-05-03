@@ -1,0 +1,6 @@
+[
+  {"path": "analysis/experiments/pure_comparison/original.jpg", "label": "Eredeti"},
+  {"path": "analysis/experiments/pure_comparison/dd_only.jpg",  "label": "Csak DeepDream (3 pass)"},
+  {"path": "analysis/experiments/pure_comparison/nst_only.jpg", "label": "Csak NST"},
+  {"path": "analysis/experiments/pure_comparison/hybrid.jpg",   "label": "Hibrid DD+NST (LSD)"}
+]

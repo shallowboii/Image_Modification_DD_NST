@@ -48,7 +48,7 @@ def main():
             ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 0.3,
                     f"{t:.1f}s", ha="center", fontsize=9)
 
-    fig.suptitle("Futási idők — experiments_config.json", fontsize=13)
+    fig.suptitle("Futási idők — thesis_configs/experiments_config.json", fontsize=13)
     plt.tight_layout()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(OUT, dpi=120)

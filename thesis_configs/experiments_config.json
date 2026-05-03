@@ -1,0 +1,13 @@
+[
+  {"category": "multi_input", "preset": "LSD", "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/chruch.jpg"},
+  {"category": "multi_input", "preset": "LSD", "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/mountain_rays.jpg"},
+  {"category": "multi_input", "preset": "LSD", "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/dahlia.jpg"},
+  {"category": "multi_input", "preset": "LSD", "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/waterfall.jpg"},
+
+  {"category": "multi_style", "preset": "LSD", "mode": "fixed", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/chruch.jpg"},
+  {"category": "multi_style", "preset": "LSD", "mode": "fixed", "style": "cyberpunk.jpg", "input": "utils/data/in-images/chruch.jpg"},
+  {"category": "multi_style", "preset": "LSD", "mode": "fixed", "style": "the-starry-night-1889(1)-3815145188.jpg", "input": "utils/data/in-images/chruch.jpg"},
+
+  {"category": "adaptive_vs_fixed", "preset": "LSD", "mode": "fixed",    "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"},
+  {"category": "adaptive_vs_fixed", "preset": "LSD", "mode": "adaptive", "style": "kaleidoscope.jpg", "input": "utils/data/in-images/yosemite.jpg"}
+]

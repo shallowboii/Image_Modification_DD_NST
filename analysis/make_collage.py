@@ -5,7 +5,7 @@ Creates a labeled grid collage from a list of images.
 
 Usage:
     python analysis/make_collage.py \
-        --config analysis/collage_church.json \
+        --config thesis_configs/collage_church.json \
         --out Pictures/preset_comparison_church.png \
         --cols 4 \
         --title "Preset összehasonlítás – Katedrális"

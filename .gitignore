@@ -13,9 +13,10 @@ __pycache__/
 *$py.class
 .Python
 
-# IDE
+# IDE / tooling
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 .DS_Store
@@ -36,4 +37,14 @@ frontend/node_modules
 Thesis
 
 #Logs
+backend/results/
 backend/results/*.json
+backend/app/database.db
+backend/database.db
+analysis/experiments/
+analysis/results/
+analysis/experiments/**/*.log.json
+analysis/experiments/runtime_report.json
+**/experiment_log.json
+*.log
+*.log.json

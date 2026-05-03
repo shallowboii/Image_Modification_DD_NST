@@ -14,7 +14,8 @@ FROM python:3.11-slim AS runtime
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app:/app/backend
 
 # OpenCV needs libGL + libglib for image I/O even in headless mode.
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -45,4 +46,4 @@ COPY --from=frontend-build /app/frontend/dist /app/frontend/react-app/dist
 RUN mkdir -p /app/backend/uploads /app/backend/results
 
 EXPOSE 8000
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/app/backend"]

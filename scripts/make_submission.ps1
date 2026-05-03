@@ -43,10 +43,10 @@ Expand-Archive -Path $archivePath -DestinationPath $StagingDir -Force
 Remove-Item $archivePath
 
 # 3) Copy in non-tracked, but runtime-required assets
+#    (in-images/ already contains the styles/ subdir, so it covers both.)
 $extras = @(
     "utils\model\weights",      # .pth files (gitignored as *.pth)
-    "utils\data\in-images",     # sample inputs (gitignored as *.jpg)
-    "utils\data\styles"         # sample style images
+    "utils\data\in-images"      # sample inputs + styles (gitignored as *.jpg)
 )
 foreach ($rel in $extras) {
     $src = Join-Path $RepoRoot $rel

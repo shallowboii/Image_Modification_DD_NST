@@ -1,7 +1,7 @@
 # Image Modification with DeepDream and Neural Style Transfer
 
-Bachelor's thesis project — **Szöllős Marcell**, Óbuda University, 2026.
-Supervisor: dr. Vámossy Zoltán.
+Bachelor's thesis project — **Szőllős Márton**, Óbuda University, 2026.
+Supervisor: Prof. Dr. Vámossy Zoltán.
 
 A web-based image modification system that combines **DeepDream** and
 **Neural Style Transfer (NST)** in a cyclic pipeline to produce

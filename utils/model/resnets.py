@@ -24,7 +24,8 @@ class ResNet50(torch.nn.Module):
             resnet50 = models.resnet50(pretrained=False,progress=show_progress)
             # Build the path to the weights file
             modelpath = os.path.join(BASE_DIR, "weights", "CE_imagenet1k_resnet50_lr_0.1_acc48_bs128.pth")
-            checkpoint = torch.load(modelpath,weights_only=False)
+            map_location = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            checkpoint = torch.load(modelpath, weights_only=False, map_location=map_location)
             # Access the state dictionaries
             model_state_dict = checkpoint['model']
             # Now, you can use the state_dicts to load into your model and optimizer

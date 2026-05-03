@@ -1,6 +1,7 @@
 # backend/app/services/orchestrator.py
 import json
 import os
+import time
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -146,7 +147,7 @@ def _build_base_configs(input_path, parameters, dump_dir, presets=None):
 # Fixed cyclic pipeline
 # ─────────────────────────────────────────────────────────────────────────────
 
-def run_cyclic_pipeline(input_path, parameters, dump_dir):
+def run_cyclic_pipeline(input_path, parameters, dump_dir, timing_out: dict | None = None):
     """
     input_path: path to input image
     parameters: dict of params (preset name and/or individual overrides)
@@ -191,7 +192,10 @@ def run_cyclic_pipeline(input_path, parameters, dump_dir):
         print(f"Cycle {c+1}/{num_cycles} [DeepDream] "
               f"lr={dd_conf['lr']}  iters={dd_conf['num_gradient_ascent_iterations']}"
               f"  pyramid={dd_conf['pyramid_size']}  blend={dd_conf['dream_blend']}")
+        _t0 = time.perf_counter()
         current = run_deepdream_once(current, dd_conf)
+        if timing_out is not None:
+            timing_out["dd_s"] = timing_out.get("dd_s", 0.0) + (time.perf_counter() - _t0)
 
         # ── NST ──────────────────────────────────────────────────────────────
         style_path  = _merge(parameters.get("style"), nst_preset.get("style_path"))
@@ -207,10 +211,13 @@ def run_cyclic_pipeline(input_path, parameters, dump_dir):
 
         print(f"Cycle {c+1}/{num_cycles} [NST] "
               f"steps={num_steps}  style_w={style_weight:.0e}  tv_w={tv_weight:.2e}")
+        _t0 = time.perf_counter()
         current = run_nst(current, style_path,
                           num_steps=num_steps,
                           style_weight=style_weight,
                           tv_weight=tv_weight)
+        if timing_out is not None:
+            timing_out["nst_s"] = timing_out.get("nst_s", 0.0) + (time.perf_counter() - _t0)
 
     current  = _upsample_to_original(current, orig_w, orig_h, process_w)
     out_path = utilities.save_and_maybe_display_image(
@@ -232,6 +239,7 @@ def run_adaptive_cyclic_pipeline(
     adaptive_config: dict | None = None,
     save_intermediates: bool = True,
     plot_metrics: bool = False,
+    timing_out: dict | None = None,
 ) -> str:
     """
     Adaptive DD → NST cyclic pipeline.
@@ -296,7 +304,10 @@ def run_adaptive_cyclic_pipeline(
         print(f"  [DD params]  lr={dd_conf['lr']}  iters={dd_conf['num_gradient_ascent_iterations']}"
               f"  pyramid={dd_conf['pyramid_size']}  dream_weight={controller.dream_weight:.3f}")
 
+        _t0 = time.perf_counter()
         current = run_deepdream_once(current, dd_conf)
+        if timing_out is not None:
+            timing_out["dd_s"] = timing_out.get("dd_s", 0.0) + (time.perf_counter() - _t0)
 
         if save_intermediates:
             path = os.path.join(dump_dir, f"cycle_{c:02d}_deepdream.jpg")
@@ -313,6 +324,7 @@ def run_adaptive_cyclic_pipeline(
               f"  style_w={nst_conf['style_weight']:.0e}"
               f"  tv_w={nst_conf['tv_weight']:.2e}")
 
+        _t0 = time.perf_counter()
         current = run_nst(
             current,
             nst_conf["style_path"],
@@ -320,6 +332,8 @@ def run_adaptive_cyclic_pipeline(
             style_weight=nst_conf["style_weight"],
             tv_weight=nst_conf["tv_weight"],   # adaptive TV weight now forwarded
         )
+        if timing_out is not None:
+            timing_out["nst_s"] = timing_out.get("nst_s", 0.0) + (time.perf_counter() - _t0)
 
         if save_intermediates:
             path = os.path.join(dump_dir, f"cycle_{c:02d}_nst.jpg")

@@ -43,15 +43,10 @@ class SupportedPretrainedWeights(enum.Enum):
 
 SUPPORTED_IMAGE_FORMATS = ['.jpg', '.jpeg', '.png', '.bmp']
 
-BINARIES_PATH = os.path.join(os.path.dirname(__file__), os.pardir, 'models', 'binaries')
 DATA_DIR_PATH = os.path.join(os.path.dirname(__file__), os.pardir, 'data')
 
 INPUT_DATA_PATH = os.path.join(DATA_DIR_PATH, 'input')
 OUT_IMAGES_PATH = os.path.join(DATA_DIR_PATH, 'out-images')
-
-
-# Make sure these exist as the rest of the code relies on it
-os.makedirs(BINARIES_PATH, exist_ok=True)
 os.makedirs(OUT_IMAGES_PATH, exist_ok=True)
 
 

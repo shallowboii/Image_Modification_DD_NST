@@ -30,7 +30,7 @@ WORKDIR /app
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 COPY backend/requirements.txt /tmp/requirements.txt
 RUN pip install --extra-index-url ${TORCH_INDEX_URL} \
-        opencv-python-headless matplotlib uvicorn[standard] \
+        opencv-python-headless matplotlib uvicorn[standard] python-multipart \
     && pip install --extra-index-url ${TORCH_INDEX_URL} -r /tmp/requirements.txt
 
 # Copy application source

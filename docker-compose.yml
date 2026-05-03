@@ -1,0 +1,31 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # For NVIDIA GPU builds, uncomment and rebuild:
+      # args:
+      #   TORCH_INDEX_URL: https://download.pytorch.org/whl/cu121
+    image: dd-nst:latest
+    container_name: dd-nst
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist generated outputs across container restarts
+      - ./backend/results:/app/backend/results
+      - ./backend/uploads:/app/backend/uploads
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+    # ─── GPU acceleration (optional) ──────────────────────────────────────────
+    # Requires NVIDIA driver + nvidia-container-toolkit on the host.
+    # Uncomment the block below to enable.
+    #
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

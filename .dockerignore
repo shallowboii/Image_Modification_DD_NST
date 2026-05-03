@@ -1,0 +1,38 @@
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+
+# Virtual envs
+venv/
+.venv/
+env/
+
+# Node
+frontend/react-app/node_modules
+frontend/react-app/dist
+
+# IDE / tooling
+.vscode/
+.idea/
+.claude/
+.git/
+.gitignore
+
+# Logs and DB
+*.log
+*.log.json
+backend/database.db
+backend/app/database.db
+backend/results/
+backend/uploads/
+
+# Experiments output
+analysis/experiments/
+analysis/results/
+
+# Thesis (LaTeX) — not needed at runtime
+Thesis/
+
+# Submission artefacts
+submission/
+*.zip

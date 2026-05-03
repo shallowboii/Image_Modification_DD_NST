@@ -19,15 +19,17 @@ the bound thesis document.
 
 1. [Abstract](#abstract)
 2. [System architecture](#system-architecture)
-3. [Installation](#installation)
-4. [Running the application](#running-the-application)
-5. [Presets](#presets)
-6. [Reproducing the thesis experiments](#reproducing-the-thesis-experiments)
-7. [Analysis & figure scripts](#analysis--figure-scripts)
-8. [Configuration files reference](#configuration-files-reference)
-9. [Repository layout](#repository-layout)
-10. [Limitations & future work](#limitations--future-work)
-11. [License](#license)
+3. [Quick start (Docker)](#quick-start-docker)
+4. [Installation (native)](#installation-native)
+5. [Running the application](#running-the-application)
+6. [Presets](#presets)
+7. [Reproducing the thesis experiments](#reproducing-the-thesis-experiments)
+8. [Analysis & figure scripts](#analysis--figure-scripts)
+9. [Configuration files reference](#configuration-files-reference)
+10. [Building the submission package](#building-the-submission-package)
+11. [Repository layout](#repository-layout)
+12. [Limitations & future work](#limitations--future-work)
+13. [License](#license)
 
 ---
 
@@ -89,7 +91,42 @@ ResNet-50.
 
 ---
 
-## Installation
+## Quick start (Docker)
+
+The fastest way to run the system end-to-end. Requires Docker Desktop
+(or Docker Engine + the Compose v2 plugin).
+
+```bash
+docker compose up --build
+```
+
+Then open <http://localhost:8000> — FastAPI serves the built React
+frontend on the same port. Generated images are persisted on the host
+under `./backend/results/`.
+
+**CPU vs GPU.** The default build pulls **CPU-only** PyTorch wheels —
+it works on any machine but a `HEAVY` preset takes 15–30 minutes per
+image. To enable NVIDIA GPU acceleration you need the
+[nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+on the host, then:
+
+1. In [docker-compose.yml](docker-compose.yml) uncomment both the
+   `args.TORCH_INDEX_URL` line (use the URL matching your CUDA, e.g.
+   `https://download.pytorch.org/whl/cu121`) and the `deploy.resources`
+   GPU block.
+2. Rebuild: `docker compose build --no-cache && docker compose up`.
+
+To stop:
+
+```bash
+docker compose down
+```
+
+---
+
+## Installation (native)
+
+If you prefer running without Docker (e.g. for development).
 
 ### Prerequisites
 
@@ -246,6 +283,32 @@ Each entry is `{path, label}` (or `{input, output, label}` for before/after pair
 
 ---
 
+## Building the submission package
+
+A PowerShell script bundles the repository into a self-contained zip
+suitable for thesis submission — source code, ResNet-50 weights, sample
+input/style images, Docker files, and any pre-rendered experiment
+outputs:
+
+```powershell
+.\scripts\make_submission.ps1
+```
+
+This produces `Szollos_Marcell_szakdolgozat.zip` in the repository root
+(≈ 220 MB — most of it is the 196 MB `.pth` weights file). The script
+uses `git archive` to dump tracked files (so `.gitignore` is honoured),
+then copies in the gitignored runtime assets that are needed to actually
+run the system. The LaTeX `Thesis/` folder, `venv/`, `node_modules/`,
+and the SQLite job DB are excluded.
+
+To use a different filename:
+
+```powershell
+.\scripts\make_submission.ps1 -OutputName "MyName_thesis.zip"
+```
+
+---
+
 ## Repository layout
 
 ```
@@ -271,6 +334,9 @@ utils/
 frontend/react-app/src/      React + TypeScript components
 analysis/                    experiment runner, figure scripts, ad-hoc batch configs
 thesis_configs/              JSON configs that drive the thesis figures
+scripts/make_submission.ps1  Build the thesis submission zip
+Dockerfile                   Multi-stage frontend + backend image
+docker-compose.yml           One-command service launcher (CPU default, GPU optional)
 ```
 
 ---

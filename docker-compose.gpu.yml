@@ -1,0 +1,23 @@
+# GPU override — use together with docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+#
+# Requirements on the host:
+#   • NVIDIA GPU with up-to-date driver
+#   • Docker Desktop with WSL2 backend (Windows) or
+#     nvidia-container-toolkit (Linux)
+#
+# Build cost: pulls the CUDA-enabled PyTorch wheel (~2 GB).
+
+services:
+  app:
+    build:
+      args:
+        TORCH_INDEX_URL: https://download.pytorch.org/whl/cu121
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

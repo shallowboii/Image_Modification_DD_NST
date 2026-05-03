@@ -104,23 +104,38 @@ Then open <http://localhost:8000> — FastAPI serves the built React
 frontend on the same port. Generated images are persisted on the host
 under `./backend/results/`.
 
-**CPU vs GPU.** The default build pulls **CPU-only** PyTorch wheels —
-it works on any machine but a `HEAVY` preset takes 15–30 minutes per
-image. To enable NVIDIA GPU acceleration you need the
-[nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-on the host, then:
-
-1. In [docker-compose.yml](docker-compose.yml) uncomment both the
-   `args.TORCH_INDEX_URL` line (use the URL matching your CUDA, e.g.
-   `https://download.pytorch.org/whl/cu121`) and the `deploy.resources`
-   GPU block.
-2. Rebuild: `docker compose build --no-cache && docker compose up`.
-
 To stop:
 
 ```bash
 docker compose down
 ```
+
+### CPU vs GPU build
+
+The default build pulls **CPU-only** PyTorch wheels (~800 MB download)
+— it works on any machine but a `HEAVY` preset takes 15–30 minutes per
+image.
+
+> **⚠️ GPU build downloads ~2 GB of CUDA libraries** the first time.
+> Make sure you are on a fast connection before kicking it off.
+
+To enable NVIDIA GPU acceleration:
+
+**Prerequisites on the host:**
+- NVIDIA GPU with an up-to-date driver
+- On Windows: Docker Desktop with the WSL2 backend (default)
+- On Linux: [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+
+**Run with the GPU override file:**
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+```
+
+The first build downloads the CUDA-enabled PyTorch wheel (~2 GB) and
+takes 10–15 minutes; subsequent runs use the cached image and start in
+seconds. Inside the container the log line `CUDA available: True`
+confirms GPU acceleration is active.
 
 ---
 

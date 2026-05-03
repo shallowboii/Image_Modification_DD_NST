@@ -1,0 +1,369 @@
+/* ── Layout ─────────────────────────────── */
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 3rem;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #2a2a2a;
+  padding-bottom: 1rem;
+}
+
+.app-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.app-header span {
+  font-size: 0.8rem;
+  color: #666;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 700px) {
+  .app-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Cards ───────────────────────────────── */
+.card {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.card-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+/* ── Image Uploader ──────────────────────── */
+.upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.dropzone {
+  border: 1.5px dashed #333;
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  position: relative;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.dropzone:hover {
+  border-color: #7c6aff;
+}
+
+.dropzone input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.dropzone-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.dropzone-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.dropzone-sub {
+  font-size: 0.65rem;
+  color: #555;
+}
+
+.dropzone-preview {
+  width: 100%;
+  border-radius: 5px;
+  object-fit: cover;
+  max-height: 120px;
+}
+
+/* ── Control Panel ───────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: #111;
+  border-radius: 6px;
+  padding: 3px;
+  margin-bottom: 1.25rem;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.4rem;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #666;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab-btn.active {
+  background: #2a2a2a;
+  color: #e8e8e8;
+}
+
+.preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #2a2a2a;
+  border-radius: 8px;
+  background: transparent;
+  color: #ccc;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.preset-btn:hover {
+  border-color: #444;
+  background: #222;
+}
+
+.preset-btn.selected {
+  border-color: #7c6aff;
+  background: rgba(124, 106, 255, 0.08);
+  color: #fff;
+}
+
+.preset-icon {
+  font-size: 1.25rem;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.preset-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.preset-desc {
+  font-size: 0.7rem;
+  color: #666;
+}
+
+/* ── Custom params ───────────────────────── */
+.params-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.param-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.param-field label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #555;
+}
+
+.param-field input {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 5px;
+  padding: 0.4rem 0.5rem;
+  color: #e8e8e8;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.param-field input:focus {
+  border-color: #7c6aff;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.mode-toggle-btn {
+  flex: 1;
+  padding: 0.4rem;
+  border: 1.5px solid #2a2a2a;
+  border-radius: 6px;
+  background: transparent;
+  color: #666;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.mode-toggle-btn.active {
+  border-color: #7c6aff;
+  color: #7c6aff;
+}
+
+/* ── Generate button ─────────────────────── */
+.generate-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #7c6aff;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.generate-btn:hover:not(:disabled) {
+  background: #9080ff;
+}
+
+.generate-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Progress viewer ─────────────────────── */
+.progress-viewer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #2a2a2a;
+  border-top-color: #7c6aff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.progress-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.progress-stage {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+/* ── Result viewer ───────────────────────── */
+.result-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.result-image {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.result-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.result-btn {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 7px;
+  border: 1.5px solid #2a2a2a;
+  background: transparent;
+  color: #ccc;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.result-btn:hover {
+  border-color: #7c6aff;
+  color: #7c6aff;
+}
+
+.result-btn.primary {
+  background: #7c6aff;
+  border-color: #7c6aff;
+  color: #fff;
+}
+
+.result-btn.primary:hover {
+  background: #9080ff;
+}
+
+/* ── Error banner ────────────────────────── */
+.error-banner {
+  background: rgba(255, 80, 80, 0.12);
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  border-radius: 7px;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  color: #ff8080;
+  margin-bottom: 1rem;
+}

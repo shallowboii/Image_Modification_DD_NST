@@ -14,12 +14,12 @@
 #
 # Usage (from repo root):
 #   .\scripts\make_submission.ps1
-#   .\scripts\make_submission.ps1 -OutputName "Szollos_Marcell_szakdolgozat.zip"
+#   .\scripts\make_submission.ps1 -OutputName "CU0FK0_Szollos_Vamossy_SZF.zip"
 # ----------------------------------------------------------------------------
 
 [CmdletBinding()]
 param(
-    [string]$OutputName = "Szollos_Marcell_szakdolgozat.zip",
+    [string]$OutputName = "CU0FK0_Szollos_Vamossy_SZF.zip",
     [string]$StagingDir = "submission_staging"
 )
 
